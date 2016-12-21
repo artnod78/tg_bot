@@ -41,15 +41,15 @@ def main():
 				# si la commande existe
 				if cmd in command_list:
 					# on répond à la commande
-					bot.reply_Message(msg.msg, reply[cmd])
+					bot.reply_Message(msg, reply[cmd])
 					# on affiche une ligne pour faire joli
 					afficher_ligne(msg, cmd)
 				# sinon
 				else:
 					# on repond un message basique
-					bot.reply_Message(msg.msg, reply['null'])
+					bot.reply_Message(msg, reply['null'])
 			# on efface le message
-			bot.clear_Message(msg.msg)
+			bot.clear_Message(msg)
 
 if __name__ == '__main__':
 	main()
