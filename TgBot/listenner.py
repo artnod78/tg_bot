@@ -14,11 +14,13 @@ Je suis un super bot stupide
 Tu peux essayer /help pour obtenir de l'aide
 """
 
+access_text="Access Denied"
+
 help_text ="""Bienvenue
 Voici la liste des commandes disponible:
 /help - Get help
 """
-reply = {'null': unknow_text, 'help': help_text, 'start':start_text}
+reply = {'null': unknow_text, 'help': help_text, 'start':start_text, 'access':access_text}
 
 def afficher_ligne(msg, txt):
 	print("{} - {} - {} - {} - {}".format(
@@ -54,7 +56,7 @@ def main():
 						# on repond un message basique
 						bot.reply_Message(msg, reply['null'])
 			else:
-				bot.reply_Message(msg, "Access Denied")
+				bot.reply_Message(msg, reply['access'])
 			# on efface le message
 			bot.clear_Message(msg)
 
