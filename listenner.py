@@ -11,7 +11,7 @@ Bienvenue
 Voici la liste des commandes disponible:
 /help - Get help
 """
-reply = {'null': unknow_text, 'help': help_text,}
+reply = {'null': unknow_text, 'help': help_text}
 
 class TgBot:
 	"""Classe définissant un bot pour Telegram caractérisée par :
