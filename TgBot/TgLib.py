@@ -80,9 +80,9 @@ class TgBot:
 	def reply_Message(self, msg, text):
 		response = requests.post(
 			url = self.URL + "sendMessage",
-			data={'reply_to_message_id': msg['message']['message_id'], 'chat_id': msg['message']['chat']['id'], 'text': text}
+			data={'reply_to_message_id': msg.msg['message']['message_id'], 'chat_id': msg.msg['message']['chat']['id'], 'text': text}
 		)
 		
 	def clear_Message(self, msg):
-		data = {'offset':msg['update_id']+1}
+		data = {'offset':msg.msg['update_id']+1}
 		null = self.get_Updates(data)
