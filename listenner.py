@@ -89,7 +89,6 @@ def main():
 			cmds = bot.getCommand(msg)
 			# pour chaque commande
 			for cmd in cmds:
-				print(cmd)
 				# si la commande existe
 				if cmd in command_list:
 					# on répond à la commande
