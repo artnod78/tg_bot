@@ -33,7 +33,6 @@ def get_updates_messages():
 	if(update_list['ok']):
 		if(nb_msg > 0):
 			for msg in update_list['result']:   
-				
 					update_id = msg['update_id']
 					msg_id = msg['message']['message_id']
 					chat_id = msg['message']['chat']['id']
