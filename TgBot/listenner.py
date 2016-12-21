@@ -1,6 +1,9 @@
 from TgLib import TgBot, TgMsg
 
+white_list = ['Artnod', 'lacarpe']
+
 command_list = ['start', 'help']
+
 
 unknow_text ="""Désolé je ne comprends pas la demande.
 Tu peux essayer /help pour obtenir de l'aide
@@ -36,18 +39,22 @@ def main():
 		for message in msg_list:
 			# on initialise le message
 			msg = TgMsg(message)
-			# pour chaque commande
-			for cmd in msg.get_Command():
-				# si la commande existe
-				if cmd in command_list:
-					# on répond à la commande
-					bot.reply_Message(msg, reply[cmd])
-					# on affiche une ligne pour faire joli
-					afficher_ligne(msg, cmd)
-				# sinon
-				else:
-					# on repond un message basique
-					bot.reply_Message(msg, reply['null'])
+			# si l'username est dans la white_list
+			if msg.get_Username() in white_list:
+				# pour chaque commande
+				for cmd in msg.get_Command():
+					# si la commande existe
+					if cmd in command_list:
+						# on répond à la commande
+						bot.reply_Message(msg, reply[cmd])
+						# on affiche une ligne pour faire joli
+						afficher_ligne(msg, cmd)
+					# sinon
+					else:
+						# on repond un message basique
+						bot.reply_Message(msg, reply['null'])
+			else:
+				bot.reply_Message(msg, "Access Denied")
 			# on efface le message
 			bot.clear_Message(msg)
 
