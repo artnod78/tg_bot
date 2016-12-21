@@ -14,7 +14,7 @@ Je suis un super bot stupide
 Tu peux essayer /help pour obtenir de l'aide
 """
 
-access_text="Access Denied"
+access_text="""Access Denied"""
 
 help_text ="""Bienvenue
 Voici la liste des commandes disponible:
