@@ -3,7 +3,7 @@ import os, shutil
 from TgLib import TgBot, TgMsg
 
 token = "<token>"
-white_list = ['Artnod', ]
+white_list = ['Artnod', 'lacarpe']
 home_dir = os.path.realpath('E:/fileserver/')
 
 command_list = ['cd', 'ls', 'pwd', 'mkdir', 'rm', 'get', 'help']
@@ -102,9 +102,7 @@ def exec_Get(param, user):
 	if test_path.startswith(real_path):
 		if os.path.exists(path):
 			if os.path.isfile(path):
-				print('true')
 				return True
-	print('false')
 	return False
 					
 def exec_Command(bot, msg):

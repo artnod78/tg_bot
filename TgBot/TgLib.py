@@ -1,10 +1,6 @@
 # -*- coding: UTF-8 -*-
 import requests, json, datetime, shutil
 
-from poster.encode import multipart_encode
-from poster.streaminghttp import register_openers
-import urllib2
-
 class TgMsg:
 	"""Classe définissant un message de Telegram caractérisée par :
 	- son message"""
