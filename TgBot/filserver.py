@@ -89,7 +89,7 @@ def exec_Rm(param, user):
 		if os.path.exists(path):
 			if os.path.isfile(path):
 				os.remove(path)
-			elif os.path.isdir:
+			elif os.path.isdir(path):
 				shutil.rmtree(path)
 			return 'Success'
 		return 'Doesn\' t exist'
