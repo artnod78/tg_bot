@@ -329,34 +329,3 @@ class TgSender():
 	def send(self, user, message):
 		param = {'chat_id':user, 'text':message}
 		self.__bot.send_Message(param)
-	
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
