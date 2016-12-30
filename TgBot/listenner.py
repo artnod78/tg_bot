@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
-from TgLib import TgBot, TgMsg
+from TgLib import TgBot
 
-token = "<token>"
-white_list = ['<username>',]
+token = '<token>'
+white_list = ['<user>',]
 
 command_list = ['start', 'help']
 
@@ -17,24 +17,32 @@ help_text ="""Voici la liste des commandes disponible:
 """
 reply = {'start':start_text , 'help': help_text}
 
-def afficher_ligne(msg, txt):
-	print("{} - {} - {} - {} - {}".format(
-		msg.get_Date(), 
-		msg.get_UpdateId(), 
-		msg.get_Username(), 
-		msg.get_ChatId(), 
-		txt
+def afficher_ligne(msg, resp, cmd):
+	if resp.isOk():
+		print("{} - {} - {} - {}".format(
+			msg.get_Date(), 
+			msg.get_MessageId(), 
+			resp.get_UserName(), 
+			cmd['cmd']+' '+cmd['param']
+			)
 		)
-	)
-
+	else:
+		print('{} - {} - ERROR {} - {}'.format(
+			msg.get_Date(), 
+			msg.get_MessageId(), 
+			resp.get_ErrCode(),
+			resp.get_Error()
+			)
+		)
+	
 def main():
 	bot = TgBot(token, white_list)
 	while(1):
 		for msg in bot.get_MessageWithCommand():
 			for cmd in msg.get_Command():
 				if cmd['cmd'] in command_list:
-					bot.reply_Message(msg, reply[cmd['cmd']])
-					afficher_ligne(msg, cmd)
+					resp = bot.reply_Message(msg, reply[cmd['cmd']])
+					afficher_ligne(msg, resp, cmd)
 			bot.clear_Message(msg)
 
 if __name__ == '__main__':
