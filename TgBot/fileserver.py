@@ -2,7 +2,7 @@
 from TgLib import TgFiler
 
 token = "<token>"
-white_list = ['<user1>', '<user2>']
+white_list = ['<username>',]
 home_dir = r'<path>'
 
 def main():

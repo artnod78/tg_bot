@@ -5,45 +5,64 @@ class TgMsg:
 	"""Classe définissant un message de Telegram caractérisée par :
 	- son message"""
 
-	msg = []
 
 	def __init__(self, msg):
-		self.msg = msg
+		self.__msg = msg
 
+		
 	def have_Text(self):
-		if('text' in msg['message']):
+		if('text' in self.__msg['message']):
 			return True
 		return False
 
 	def have_Command(self):
-		if('entities' in self.msg['message']):
-			for cmd in self.msg['message']['entities']:
+		if('entities' in self.__msg['message']):
+			for cmd in self.__msg['message']['entities']:
 				if(cmd['type'] == 'bot_command'):
 					return True
 		return False
 		
 	def have_Document(self):
-		if('document' in self.msg['message']):
+		if('document' in self.__msg['message']):
 			return True
 		return False
 
 	def is_Edited(self):
-		if 'edited_message' in self.msg:
+		if 'edited_message' in self.__msg:
 			return True
 		return False
 
+
+	def get_UpdateId(self):
+		return self.__msg['update_id']
+		
+	def get_MessageId(self):
+		return self.__msg['message']['message_id']
+		
 	def get_Date(self):
-		return datetime.datetime.fromtimestamp(self.msg['message']['date'])
-	
+		return datetime.datetime.fromtimestamp(self.__msg['message']['date'])
+		
 	def get_Text(self):
-		if('text' in self.msg['message']):
-			return self.msg['message']['text']
+		if('text' in self.__msg['message']):
+			return self.__msg['message']['text']
 		return ""
-	
+		
+	def get_Username(self):
+		return self.__msg['message']['from']['username']
+		
+	def get_ChatId(self):
+		return self.__msg['message']['chat']['id']
+		
+	def get_DocumentId(self):
+		return self.__msg['message']['document']['file_id']
+
+	def get_DocumentName(self):
+		return self.__msg['message']['document']['file_name']
+		
 	def get_Command(self):
 		cmd_list = []
 		if(self.have_Command()):
-			for cmd in self.msg['message']['entities']:
+			for cmd in self.__msg['message']['entities']:
 				if(cmd['type'] == 'bot_command'):
 					start_cmd = cmd['offset'] +1
 					stop_cmd = cmd['offset'] + cmd['length']
@@ -59,92 +78,87 @@ class TgMsg:
 					cmd_list.append({'cmd': command, 'param': param})
 		return cmd_list
 
-	def get_DocumentId(self):
-		return self.msg['message']['document']['file_id']
-
-	def get_DocumentName(self):
-		return self.msg['message']['document']['file_name']
-	
-	def get_UpdateId(self):
-		return self.msg['update_id']
-		
-	def get_Username(self):
-		return self.msg['message']['from']['username']
-		
-	def get_ChatId(self):
-		return self.msg['message']['chat']['id']
-
 class TgBot:
 	"""Classe définissant un bot pour Telegram caractérisée par :
-	- son token"""
-
-	URL = "not set"
-	FILE_URL = "not set"
-
-	def __init__(self, token):
+	- son token
+	- une liste blanche"""
+	__URL = ''
+	__FILE_URL = ''
+	__white_list = []
+	
+	
+	def __init__(self, token, white_list):
 		self.token = token
-		self.URL = "https://api.telegram.org/bot{}/".format(token)
-		self.FILE_URL = "https://api.telegram.org/file/bot{}/".format(token)
+		self.__URL = 'https://api.telegram.org/bot{}/'.format(token)
+		self.__FILE_URL = 'https://api.telegram.org/file/bot{}/'.format(token)
+		for user in white_list:
+			self.__white_list.append(user)
 
-	def get_Updates(self, param = {}):
+			
+	def __get_Updates(self, param = {}):
 		response = requests.post(
-			url = self.URL + "getUpdates",
+			url = self.__URL + "getUpdates",
 			data= param
 		)
 		js = json.loads(response.content.decode("utf8"))
 		return js
 
-	def send_Document(self, msg, path, name):
-		url = self.URL + "sendDocument"
-		file = {'document': open(path, 'rb')}
-		data = {'reply_to_message_id': msg.msg['message']['message_id'], 'chat_id': msg.msg['message']['chat']['id'], 'document': file}
-		response = requests.post(url, data, files = file)
-	
+		
 	def get_Message(self):
 		msg_list = []
-		update_list = self.get_Updates()
+		update_list = self.__get_Updates()
 		if(update_list['ok']):
-			return update_list['result']
+			for message in update_list['result']:
+				msg = TgMsg(message)
+				if(msg.get_Username() in self.__white_list):
+					msg_list.append(msg)
+		return msg_list
 		
 	def get_MessageWithCommand(self):
 		msg_list = []
-		update_list = self.get_Updates()
-		if(update_list['ok']):
-			for message in update_list['result']:
-				msg = TgMsg(message)
-				if(msg.have_Command()):
-					msg_list.append(message)
-		return msg_list
+		for msg in self.get_Message():
+			if(msg.have_Command()):
+				msg_list.append(msg)
+		return msg_list	
 		
 	def get_MessageWithDocument(self):
 		msg_list = []
-		update_list = self.get_Updates()
-		if(update_list['ok']):
-			for message in update_list['result']:
-				msg = TgMsg(message)
-				if(msg.have_Document()):
-					msg_list.append(message)
-		return msg_list
+		for msg in self.get_Message():
+			if(msg.have_Document()):
+				msg_list.append(msg)
+		return msg_list		
+		
+	def send_Message(self, param):
+		response = requests.post(
+			url = self.__URL + "sendMessage",
+			data=param
+		)	
+	
+	def reply_Message(self, msg, text):
+		response = requests.post(
+			url = self.__URL + "sendMessage",
+			data={'reply_to_message_id': msg.get_MessageId(), 'chat_id': msg.get_ChatId(), 'text': text}
+		)		
 		
 	def get_File(self, fileId, fullPath):
 		response = requests.post(
-			url = self.URL + "getFile",
+			url = self.__URL + "getFile",
 			data= {'file_id':fileId}
 		)
 		js = json.loads(response.content.decode("utf8"))
-		response = requests.get(self.FILE_URL + js['result']['file_path'], stream=True)
+		response = requests.get(self.__FILE_URL + js['result']['file_path'], stream=True)
 		with open(fullPath, 'wb') as f:
-			shutil.copyfileobj(response.raw, f)
-
-	def reply_Message(self, msg, text):
-		response = requests.post(
-			url = self.URL + "sendMessage",
-			data={'reply_to_message_id': msg.msg['message']['message_id'], 'chat_id': msg.msg['message']['chat']['id'], 'text': text}
-		)
+			shutil.copyfileobj(response.raw, f)		
 		
+	def send_Document(self, msg, path, name):
+		url = self.__URL + "sendDocument"
+		file = {'document': open(path, 'rb')}
+		data = {'reply_to_message_id': msg.get_MessageId(), 'chat_id': msg.get_ChatId(), 'document': file}
+		response = requests.post(url, data, files = file)
+	
 	def clear_Message(self, msg):
-		data = {'offset':msg.msg['update_id']+1}
-		null = self.get_Updates(data)
+		data = {'offset':msg.get_UpdateId()+1}
+		null = self.__get_Updates(data)
 
 class TgFiler:
 	"""Classe définissant un fileserver pour un bot Telegram caractérisée par :
@@ -152,41 +166,32 @@ class TgFiler:
 	- une liste d'utilisateur
 	- un répertoire de stockage"""
 	
-	white_list = []
-	current_dir = {}
-	command_list = ['cd', 'ls', 'pwd', 'mkdir', 'rm', 'get', 'help','start']
+	__current_dir = {}
+	__command_list = ['cd', 'ls', 'pwd', 'mkdir', 'rm', 'get', 'help','start']
 	
 	def __init__(self, token, users, homedir):
-		self.bot = TgBot(token)
-		self.home_dir = os.path.realpath(homedir)
+		self.__bot = TgBot(token, users)
+		self.__home_dir = os.path.realpath(homedir)
 		for user in users:
-			self.white_list.append(user)
-			self.current_dir[user] = os.path.join(homedir,user)
-			if not os.path.exists(self.current_dir[user]):
-				os.makedirs(self.current_dir[user])
+			self.__current_dir[user] = os.path.join(homedir,user)
+			if not os.path.exists(self.__current_dir[user]):
+				os.makedirs(self.__current_dir[user])
 			
+	
 	def exec_Cd(self, param, user):
-		if param == '..':
-			tmp_dir = os.path.split(self.current_dir[user])[0]
-			if os.path.isdir(tmp_dir):
-				self.current_dir[user] = tmp_dir
-		else:
-			tmp_dir = os.path.join(self.current_dir[user] ,param)
-			if os.path.isdir(tmp_dir):
-				self.current_dir[user] = tmp_dir
-		
-		test_path = os.path.realpath(self.current_dir[user])+'\\'
-		real_path = os.path.realpath(os.path.join(self.home_dir,user))+'\\'
-		if not test_path.startswith(real_path):
-			self.current_dir[user] = os.path.join(self.home_dir,user)
-		return self.current_dir[user]
+		test_path = os.path.realpath(os.path.join(self.__current_dir[user] ,param))
+		real_path = os.path.realpath(os.path.join(self.__home_dir,user))+'\\'
+		if str(test_path+'\\').startswith(real_path):
+			if os.path.isdir(test_path):
+				self.__current_dir[user] = test_path
+		return self.__current_dir[user]
 			
 	def exec_Ls(self, user):
-		path = self.current_dir[user]
+		path = self.__current_dir[user]
 		entries = os.listdir(path)
 		list_file = []
 		list_dir = []
-		text = 'Path: ' + path.replace(self.home_dir, '') + '\n'
+		text = 'Path: ' + path.replace(self.__home_dir, '') + '\n'
 		for entry in entries:
 			if os.path.isfile(os.path.join(path , entry)):
 				list_file.append(entry)
@@ -212,12 +217,12 @@ class TgFiler:
 		return text
 		
 	def exec_Pwd(self, user):
-		return self.current_dir[user].replace(self.home_dir, '')
+		return self.__current_dir[user].replace(self.__home_dir, '')
 	
 	def exec_Mkdir(self, param, user):
-		path = os.path.join(self.current_dir[user],param)
+		path = os.path.join(self.__current_dir[user],param)
 		test_path = os.path.realpath(path)+'\\'
-		real_path = os.path.realpath(os.path.join(self.home_dir,user))+'\\'
+		real_path = os.path.realpath(os.path.join(self.__home_dir,user))+'\\'
 		if test_path.startswith(real_path):
 			if not os.path.exists(path):
 				os.makedirs(path)
@@ -226,9 +231,9 @@ class TgFiler:
 		return 'Fail'
 	
 	def exec_Rm(self, param, user):
-		path = os.path.join(self.current_dir[user],param)
+		path = os.path.join(self.__current_dir[user],param)
 		test_path = os.path.realpath(path)+'\\'
-		real_path = os.path.realpath(os.path.join(self.home_dir,user))+'\\'
+		real_path = os.path.realpath(os.path.join(self.__home_dir,user))+'\\'
 		if test_path.startswith(real_path) and test_path != real_path:
 			if os.path.exists(path):
 				if os.path.isfile(path):
@@ -240,9 +245,9 @@ class TgFiler:
 		return 'Fail'
 		
 	def exec_Get(self, param, user):
-		path = os.path.join(self.current_dir[user],param)
+		path = os.path.join(self.__current_dir[user],param)
 		test_path = os.path.realpath(path)+'\\'
-		real_path = os.path.realpath(os.path.join(self.home_dir,user))+'\\'
+		real_path = os.path.realpath(os.path.join(self.__home_dir,user))+'\\'
 		if test_path.startswith(real_path):
 			if os.path.exists(path):
 				if os.path.isfile(path):
@@ -263,9 +268,9 @@ class TgFiler:
 			command = cmd['cmd']
 			param = cmd['param']
 			user = msg.get_Username()
-			if command in self.command_list:
+			if command in self.__command_list:
 				if(command == 'cd'):
-					reply = self.exec_Cd(param, user).replace(self.home_dir, '')
+					reply = self.exec_Cd(param, user).replace(self.__home_dir, '')
 				elif(cmd['cmd'] == 'ls'):
 					reply = self.exec_Ls(user)
 				elif(command == 'pwd'):
@@ -276,52 +281,54 @@ class TgFiler:
 					reply = self.exec_Rm(param, user)
 				elif(command == 'get'):
 					if self.exec_Get(param, user):
-						self.bot.send_Document(msg, os.path.join(self.current_dir[user],param), param)
+						self.__bot.send_Document(msg, os.path.join(self.__current_dir[user],param), param)
 						reply = None
 					else:
 						reply = 'File Error'
 				elif(command == 'help'):
 					reply =  self.exec_Help()
 				elif(command == 'start'):
-					reply = 'Bienvenue.\nTu peux essayer /help pour obtenir de l\'aide'
-			else:
-				reply = 'Désolé je ne comprends pas la demande.\nTu peux essayer /help pour obtenir de l\'aide.'
-			self.bot.reply_Message(msg, reply)
-		return cmd
+					reply = 'Bienvenue '+msg.get_Username()+'.\nTu peux essayer /help pour obtenir de l\'aide'
+				self.__bot.reply_Message(msg, reply)
+		return msg.get_Text()
 	
 	def download_File(self, msg):
 		fileId = msg.get_DocumentId()
 		fileName = msg.get_DocumentName()
 		user = msg.get_Username()
-		path = os.path.join(current_dir[user], fileName)
-		self.bot.get_File(fileId, path)
+		path = os.path.join(self.__current_dir[user], fileName)
+		self.__bot.get_File(fileId, path)
 		reply = 'Fichier Téléchargé: ' + fileName
-		self.bot.reply_Message(msg, reply)
+		self.__bot.reply_Message(msg, reply)
 		return fileName
 
 	def run(self):
 		reply = ''
-		msg_list = self.bot.get_Message()
-		for message in msg_list:
-			msg = TgMsg(message)
+		msg_list = self.__bot.get_Message()
+		for msg in msg_list:
 			if msg.is_Edited() == False:
-				if msg.get_Username() in self.white_list:
-					if msg.have_Document():
-						reply = self.download_File(msg)
-					elif msg.have_Command():
-						reply = self.exec_Command(msg)
-				else:
-					self.bot.reply_Message(msg, 'Access Denied')
-					reply = 'Access Denied'
-			self.bot.clear_Message(msg)
+				if msg.have_Document():
+					reply = self.download_File(msg)
+				elif msg.have_Command():
+					reply = self.exec_Command(msg)
+			self.__bot.clear_Message(msg)
 			print("{} - {} - {} - {} - {}".format(
 				msg.get_Date(), 
 				msg.get_UpdateId(), 
 				msg.get_Username(), 
 				msg.get_ChatId(), 
 				reply
-				))
+				)
+			)
 	
+class TgSender():
+
+	def __init__(self, token, users):
+		self.__bot = TgBot(token, users)
+		
+	def send(self, user, message):
+		param = {'chat_id':user, 'text':message}
+		self.__bot.send_Message(param)
 	
 		
 		
